@@ -7,6 +7,7 @@ import os
 import sys
 
 from .analytics import Analytics
+from .fpm import FPM
 from .fcns import Fcns
 from .connection_manager.connect_netmiko import SSHSession
 from .connection_manager.connect_nxapi import ConnectNxapi
@@ -54,9 +55,7 @@ def print_and_log(msg):
 
 class Switch(SwitchUtils):
     """
-
     Switch module
-
     :param ip_address: mgmt ip address of switch
     :type ip_address: str
     :param username: username
@@ -71,10 +70,8 @@ class Switch(SwitchUtils):
     :type timeout: int
     :param verify_ssl: SSL verification (optional, default: True)
     :type verify_ssl: bool
-
     :example:
         >>> switch_obj = Switch(ip_address = switch_ip, username = switch_username, password = switch_password)
-
     """
 
     def __init__(
@@ -119,7 +116,7 @@ class Switch(SwitchUtils):
                 verify_ssl=self.__verify_ssl,
             )
             log.info("Along with NXAPI opening up a parallel ssh connection for switch with ip " + self.__ip_address)
-            self._set_connection_type_based_on_version()
+            #self._set_connection_type_based_on_version()
 
         # Connect to ssh
         self.connect_to_ssh()
@@ -147,6 +144,7 @@ class Switch(SwitchUtils):
             self.connection_type = "ssh"
         PAT_VER = "(?P<major_plus>\d+)\.(?P<major>\d+)\((?P<minor>\d+)(?P<patch>[a-z+])?\)(?P<other>.*)"
         RE_COMP = re.compile(PAT_VER)
+        ver = "8.4.2"
         result_ver = RE_COMP.match(ver)
         supported = "Ip: " + self.__ip_address + " Version: " + ver + ", it is 8.4(2a) or above. This is a supported version for using NXAPI"
         not_supported = "Ip: " + self.__ip_address + " Version: " + ver + ", it is below 8.4(2a). This is NOT a supported version for using NXAPI, hence setting connection type to ssh"
@@ -189,7 +187,6 @@ class Switch(SwitchUtils):
             log.error("Could not get the pattern match for version, setting connection type to ssh")
             self.connection_type = "ssh"
 
-
     def is_connection_type_ssh(self):
         return self.connection_type == "ssh"
 
@@ -197,10 +194,8 @@ class Switch(SwitchUtils):
     def ipaddr(self):
         """
         Get mgmt ip address of the switch
-
         :return: IP address of switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.ipaddr)
             10.126.94.101
@@ -214,26 +209,20 @@ class Switch(SwitchUtils):
         """
         get switchname or
         set switchname
-
         :getter:
         :return: switch name
         :rtype: str
-
         :example:
             >>> print(switch_obj.name)
             swTest
             >>>
-
         :setter:
         :param name: name of the switch that needs to be set
         :type name: str
-
         :example:
             >>> switch_obj.name = "yourswitchname"
             >>>
-
         .. warning:: Switch name must start with a letter, end with alphanumeric and contain alphanumeric and hyphen only. Max size 32.
-
         """
 
         return self.show(command="show switchname", raw_text=True).strip()
@@ -241,7 +230,6 @@ class Switch(SwitchUtils):
     @name.setter
     def name(self, swname):
         """
-
         :param swname:
         :return:
         """
@@ -258,10 +246,8 @@ class Switch(SwitchUtils):
     def npv(self):
         """
         Check if switch is in NPV mode
-
         :return: Returns True if switch is in NPV, else returns False
         :rtype: bool
-
         :example:
             >>> print(switch_obj.npv)
             False
@@ -276,11 +262,9 @@ class Switch(SwitchUtils):
     def version(self):
         """
         Get the switch software version
-
         :return: version
         :rtype: str
         :raises CLIError: Raises if there was a command error or some generic error due to which version could not be fetched
-
         :example:
             >>> print(switch_obj.version)
             8.4(2)
@@ -294,7 +278,10 @@ class Switch(SwitchUtils):
             ver = outlines[0]["version"]
             log.debug("ssh: " + ver)
         else:
+            print ("bhagya here")
             out = self.show(command=cmd)
+            print("bhagya here")
+            print (out)
             if not out:
                 raise CLIError(
                     cmd,
@@ -311,16 +298,16 @@ class Switch(SwitchUtils):
             ver = fullversion.split()[0]
             log.debug("nxapi: " + ver)
         self._SW_VER = ver
+        log.error(ver)
+        log.info("check ehre")
         return ver
 
     @property
     def model(self):
         """
         Returns model of the switch
-
         :return: Returns model of the switch or returns None if model could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.model)
             MDS 9710 (10 Slot) Chassis
@@ -345,10 +332,8 @@ class Switch(SwitchUtils):
     def form_factor(self):
         """
         Returns the form factor of the switch, i.e if its a 10 slot or 6 slot or 1RU or 2RU etc..
-
         :return: Returns form factor of the switch or returns None if form factor could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.form_factor)
             10 slot
@@ -372,10 +357,8 @@ class Switch(SwitchUtils):
     def type(self):
         """
         Returns the type of the switch, i.e if its a 9710 or 9706 or 9396T etc..
-
         :return: Returns type of the switch or returns None if type could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.type)
             9710
@@ -383,7 +366,6 @@ class Switch(SwitchUtils):
             >>> print(switch2_obj.type)
             9396T
             >>>
-
         """
 
         chassisid = self.model
@@ -400,10 +382,8 @@ class Switch(SwitchUtils):
     def image_string(self):
         """
         Returns the image's string that is specific to a particular platform example m9700-sf3ek9, m9100-s6ek9 etc..
-
         :return: Returns image string of the switch or returns None if image string could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.image_string)
             m9700-sf3ek9
@@ -411,7 +391,6 @@ class Switch(SwitchUtils):
             >>> print(switch2_obj.image_string)
             m9300-s2ek9
             >>>
-
         """
 
         ff = self.form_factor.lower()
@@ -446,10 +425,8 @@ class Switch(SwitchUtils):
     def kickstart_image(self):
         """
         Returns the kickstart image of the switch
-
         :return: Returns kickstart image of the switch or returns None if kickstart image could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.kickstart_image)
             bootflash:///m9700-sf3ek9-kickstart-mz.8.4.1.bin
@@ -475,10 +452,8 @@ class Switch(SwitchUtils):
     def system_image(self):
         """
         Returns the switch image of the switch
-
         :return: Returns switch image of the switch or returns None if switch image could not be fetched from the switch
         :rtype: str
-
         :example:
             >>> print(switch_obj.system_image)
             bootflash:///m9700-sf3ek9-mz.8.4.1.bin
@@ -503,10 +478,8 @@ class Switch(SwitchUtils):
     def analytics(self):
         """
         Returns handler for analytics module, using which we could do analytics related operations
-
         :return: analytics handler
         :rtype: Analytics
-
         :example:
             >>> ana_handler = switch_obj.analytics
             >>>
@@ -518,11 +491,10 @@ class Switch(SwitchUtils):
 
         """
         Enable or disable a feature or get the status of the feature
-        
+
         :param name: Name of the feature
         :param enable: Set to True to enable the feature or set to False to disable the feature or set to None (deafault) to get the status of the feature
         :return: Returns True of False if enable is set to None
-
         :example:
             >>>
             >>> switch_obj = Switch(ip_address = switch_ip, username = switch_username, password = switch_password)
@@ -539,9 +511,7 @@ class Switch(SwitchUtils):
             >>> print(switch_obj.feature('analytics'))
             False
             >>>
-
         .. warning:: Disabling feature 'nxapi' or 'ssh' via this API is not allowed
-
         """
         # Do a type check on the enable flag
         if enable is not None:
@@ -607,10 +577,8 @@ class Switch(SwitchUtils):
     def cores(self):
         """
         Check if any cores are present in the switch
-
         :return: list of cores present in the switch if any else None
         :rtype: list or None
-
         """
 
         out = self.show(command="show cores", use_ssh=True)
@@ -660,7 +628,8 @@ class Switch(SwitchUtils):
                     for eachoutput in fullout:
                         # print(eachoutput)
                         self._cli_error_check(eachoutput)
-                        text_response_list.append(eachoutput[u"body"])
+                        #text_response_list.append(eachoutput[u"body"])
+                        text_response_list.append(eachoutput)
         return text_response_list
 
     def _show_ssh(self, command, timeout, expect_string):
@@ -673,7 +642,6 @@ class Switch(SwitchUtils):
     def show(self, command, raw_text=False, use_ssh=False, expect_string=None, timeout=60):
         """
         Send a show command to the switch
-
         :param command: The command to send to the switch.
         :type command: str
         :param raw_text: If true then returns the command output in raw text(str) else it returns structured data(dict)
@@ -698,8 +666,10 @@ class Switch(SwitchUtils):
                 return "\n".join(outlines)
             return outlines
         else:
+            print ("line 667",command)
             commands = [command]
             list_result = self._show_list(commands, raw_text)
+            #print (list_result)
             if list_result:
                 return list_result[0]
             else:
@@ -708,7 +678,6 @@ class Switch(SwitchUtils):
     def _show_list(self, commands, raw_text=False, use_ssh=False):
         """
         Send a list of show commands to the switch
-
         :param commands: The list of commands to send to the switch.
         :type commands: list
         :param raw_text: If true then returns the command output in raw text(str) else it returns structured data(dict)
@@ -742,9 +711,11 @@ class Switch(SwitchUtils):
             response_list = self._cli_command(commands)
             for response in response_list:
                 if response:
-                    return_list.append(response[u"body"])
+                    #return_list.append(response[u"body"])
+                    return_list.append(response)
 
         log.debug("Show commands sent over nxapi are :")
+        print ("line 715")
         log.debug(commands)
         log.debug("Result got via nxapi was :")
         log.debug(return_list)
@@ -754,12 +725,10 @@ class Switch(SwitchUtils):
     def config(self, command, rpc=u"2.0", method=u"cli", use_ssh=False):
         """
         Send any command to run from the config mode
-
         :param command: command to send to the switch
         :type command: str
         :raises CLIError: If there is a problem with the supplied command.
         :return: command output
-
         """
         log.debug(self.__ip_address + ":Config cmd to be sent is " + " -- " + command)
         if self.is_connection_type_ssh() or use_ssh:
@@ -777,12 +746,10 @@ class Switch(SwitchUtils):
     def _config_list(self, commands, rpc=u"2.0", method=u"cli", use_ssh=False):
         """
         Send any list of commands to run from the config mode
-
         :param commands: list of commands to send to the switch
         :type command: list
         :raises CLIError: If there is a problem with the supplied command.
         :return: command output
-
         """
         log.debug(self.__ip_address + ":Config cmds to be sent are " + " -- ".join(commands))
         if self.is_connection_type_ssh() or use_ssh:
@@ -811,7 +778,6 @@ class Switch(SwitchUtils):
     def reload(self, module=None, timeout=300, copyrs=True):
         """
         Reload a switch or a module
-
         :param module: if set to None reloads the switch else reloads the particular module
         :type module: int (default: None)
         :param timeout: time to wait for the switch/module to come up
@@ -949,8 +915,8 @@ class Switch(SwitchUtils):
             )
         except CLIError as e:
             if (
-                "Installer will perform compatibility check first. Please wait"
-                not in e.message
+                    "Installer will perform compatibility check first. Please wait"
+                    not in e.message
             ):
                 raise CLIError
         print_and_log(
